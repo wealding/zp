@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ilyaglow/zp"
+	"github.com/wealding/zp"
 )
 
 const (
