@@ -67,6 +67,7 @@ func NewRecord(line string, tld string) (*Record, error) {
 		parts := dns.SplitDomainName(n)
 		tld = parts[len(parts)-1]
 		n = strings.Join(parts[0:len(parts)-1], ".")
+		n = n[0 : len(n)-2]
 	}
 
 	return &Record{
