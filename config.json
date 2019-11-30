@@ -1,0 +1,7 @@
+{
+    "username": "bagheera@qq.com",
+    "password": "q*Rk#1!EI9lz",
+    "auth_base_url": "https://account-api.icann.org",
+    "czds_base_url": "https://czds-api.icann.org",
+    "working_dir": "./files/"
+}
