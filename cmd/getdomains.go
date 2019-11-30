@@ -1,13 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
-	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -25,39 +26,6 @@ const (
 	exceptionZone         = "net"
 	tSize                 = 10000
 )
-
-func init() {
-	iManPid := fmt.Sprint(os.Getpid())
-	tmpDir := os.TempDir()
-
-	if err := ProcExist(tmpDir); err == nil {
-		pidFile, _ := os.Create(tmpDir + "\\imanPack.pid")
-		defer pidFile.Close()
-
-		pidFile.WriteString(iManPid)
-	} else {
-		os.Exit(1)
-	}
-}
-
-func ProcExist(tmpDir string) (err error) {
-	iManPidFile, err := os.Open(tmpDir + "\\imanPack.pid")
-	defer iManPidFile.Close()
-
-	if err == nil {
-		filePid, err := ioutil.ReadAll(iManPidFile)
-		if err == nil {
-			pidStr := fmt.Sprintf("%s", filePid)
-			pid, _ := strconv.Atoi(pidStr)
-			_, err := os.FindProcess(pid)
-			if err == nil {
-				return errors.New("[ERROR] iMan升级工具已启动")
-			}
-		}
-	}
-
-	return nil
-}
 
 func main() {
 	sd := flag.String("f", "./files", "Directory with zone files with .gz extension")
@@ -88,28 +56,54 @@ func main() {
 		}()
 	}
 
-	filepath.Walk(*sd, func(path string, fi os.FileInfo, err error) error {
-		if !strings.HasSuffix(path, zoneExtension) {
+	for {
+		filepath.Walk(*sd, func(path string, fi os.FileInfo, err error) error {
+			if !strings.HasSuffix(path, zoneExtension) {
+				return nil
+			}
+			var fileName, tld string
+			fileName = filepath.Base(path)
+			tld = strings.Replace(fileName, ".txt.gz", "", -1)
+			//执行匹配
+			if err := zp.FetchZoneFile(path, tld, rc); err != nil {
+				log.Fatal(err)
+			}
+			//处理完, 挪开gz文件
+			timeStr := time.Now().Format("2006-01-02")
+			os.MkdirAll("./backup/"+timeStr, os.ModePerm)
+			if err := os.Rename(path, "./backup/"+timeStr+"/"+fileName); err != nil {
+				log.Fatal(err)
+			}
 			return nil
-		}
-		var fileName, tld string
-		fileName = filepath.Base(path)
-		tld = strings.Replace(fileName, ".txt.gz", "", -1)
-		//执行匹配
-		if err := zp.FetchZoneFile(path, tld, rc); err != nil {
-			log.Fatal(err)
-		}
-		//处理完, 挪开gz文件
-		timeStr := time.Now().Format("2006-01-02")
-		os.MkdirAll("./backup/"+timeStr, os.ModePerm)
-		if err := os.Rename(path, "./backup/"+timeStr+"/"+fileName); err != nil {
-			log.Fatal(err)
-		}
-		return nil
-	})
+		})
+		log.Println("waiting...")
+		startdown()
+		time.Sleep(20 * time.Second)
+
+	}
 
 	close(rc)
 	wg.Wait()
+}
+
+func startdown() {
+	data, err := ioutil.ReadFile("nextdown.txt")
+	if err != nil {
+		fmt.Println("File reading error", err)
+		return
+	}
+	filetime, err := strconv.ParseInt(string(data), 10, 64)
+	nowtime := time.Now().Unix()
+	if nowtime > filetime {
+		buf := bytes.Buffer{}
+		buf.WriteString(strconv.FormatInt(nowtime+86400, 10))
+		_ = ioutil.WriteFile("nextdown.txt", buf.Bytes(), 0666)
+		fmt.Println("开始下载，下次下载时间：", buf.Bytes())
+		cmd := exec.Command("czds.exe", "download")
+		if err := cmd.Start(); err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 func send(conn *sql.DB, input <-chan zp.Record) error {
