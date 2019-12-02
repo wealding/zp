@@ -31,6 +31,7 @@ func NewRecord(line string, tld string) (*Record, error) {
 		rtype string
 		value string
 		n     string
+		s     []string
 	)
 	rr, err := dns.NewRR(line)
 	if err != nil {
@@ -43,6 +44,13 @@ func NewRecord(line string, tld string) (*Record, error) {
 
 	if n = rr.Header().Name; n == "" {
 		return nil, errors.New("no domain found in the record")
+	}
+
+	//把n最后面的点去掉,并判断是否包含多于2个点或者没有点(根域)
+	n = strings.TrimSuffix(n, ".")
+	s = strings.Split(n, ".")
+	if len(s) != 2 {
+		return nil, errors.New("not a valid domain")
 	}
 
 	switch rr := rr.(type) {
@@ -60,13 +68,6 @@ func NewRecord(line string, tld string) (*Record, error) {
 		value = strings.Join(rr.Txt, ", ")
 	default:
 		return nil, errors.New("unsupported record type")
-	}
-
-	// if tld is an empty string we got zone from czds.icann.org or similar AXFR response
-	if tld == "" {
-		parts := dns.SplitDomainName(n)
-		tld = parts[len(parts)-1]
-		n = strings.Join(parts[0:len(parts)-1], ".")
 	}
 
 	return &Record{
