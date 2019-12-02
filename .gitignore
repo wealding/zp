@@ -3,6 +3,7 @@ files/
 backup/
 go.sum
 go.mod
+getdomains.exe
 
 
 # Editor directories and files

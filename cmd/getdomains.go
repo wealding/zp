@@ -31,18 +31,10 @@ var conn *sql.DB
 
 func main() {
 	sd := flag.String("f", "./files", "Directory with zone files with .gz extension")
-	ch := flag.String("c", "root:7412369Qq@tcp(127.0.0.1:3306)/allji", "Mysql String")
 	nw := flag.Int("workers", 10, "Number of sending workers")
 	flag.Parse()
 
-	conn, err := sql.Open("mysql", *ch)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := conn.Ping(); err != nil {
-		log.Fatal(err)
-	}
+	connMysql()
 
 	rc := make(chan zp.Record)
 
@@ -64,11 +56,7 @@ func main() {
 				return nil
 			}
 			if err := conn.Ping(); err != nil {
-				conn, err := sql.Open("mysql", *ch)
-				if err != nil {
-					log.Fatal(err)
-				}
-				conn.Ping()
+				connMysql()
 			}
 			var fileName, tld string
 			fileName = filepath.Base(path)
@@ -87,12 +75,26 @@ func main() {
 		})
 		log.Println("waiting...")
 		startdown()
-		time.Sleep(20 * time.Second)
+		time.Sleep(10 * time.Second)
 
 	}
 
 	close(rc)
 	wg.Wait()
+}
+
+func connMysql() {
+	ch := flag.String("c", "root:7412369Qq@tcp(127.0.0.1:3306)/allji", "Mysql String")
+	flag.Parse()
+
+	conn, err := sql.Open("mysql", *ch)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := conn.Ping(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func startdown() {
