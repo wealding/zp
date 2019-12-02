@@ -20,35 +20,22 @@ import (
 )
 
 const (
-	insertStatement       = `INSERT IGNORE INTO domains (domain, tld) VALUES (?, ?) `
+	insertStatement       = `INSERT IGNORE INTO domains (domain) VALUES (?) `
 	zoneExtension         = "gz"
 	exceptionZoneFileName = "net.txt.gz"
 	exceptionZone         = "net"
 	tSize                 = 10000
 )
 
-var conn *sql.DB
-
 func main() {
+	var conn *sql.DB
 	sd := flag.String("f", "./files", "Directory with zone files with .gz extension")
-	nw := flag.Int("workers", 10, "Number of sending workers")
 	flag.Parse()
 
-	connMysql()
-
+	conn = connMysql()
 	rc := make(chan zp.Record)
-
 	var wg sync.WaitGroup
-	wg.Add(*nw)
-
-	for i := 0; i < *nw; i++ {
-		go func() {
-			defer wg.Done()
-			if err := send(conn, rc); err != nil {
-				log.Println(err)
-			}
-		}()
-	}
+	makechan(conn, rc, wg)
 
 	for {
 		filepath.Walk(*sd, func(path string, fi os.FileInfo, err error) error {
@@ -56,7 +43,8 @@ func main() {
 				return nil
 			}
 			if err := conn.Ping(); err != nil {
-				connMysql()
+				conn = connMysql()
+				makechan(conn, rc, wg)
 			}
 			var fileName, tld string
 			fileName = filepath.Base(path)
@@ -76,14 +64,29 @@ func main() {
 		log.Println("waiting...")
 		startdown()
 		time.Sleep(10 * time.Second)
-
 	}
 
 	close(rc)
 	wg.Wait()
 }
 
-func connMysql() {
+func makechan(conn *sql.DB, rc <-chan zp.Record, wg sync.WaitGroup) {
+	nw := flag.Int("workers", 10, "Number of sending workers")
+	flag.Parse()
+
+	wg.Add(*nw)
+
+	for i := 0; i < *nw; i++ {
+		go func() {
+			defer wg.Done()
+			if err := send(conn, rc); err != nil {
+				log.Println(err)
+			}
+		}()
+	}
+}
+
+func connMysql() *sql.DB {
 	ch := flag.String("c", "root:7412369Qq@tcp(127.0.0.1:3306)/allji", "Mysql String")
 	flag.Parse()
 
@@ -95,6 +98,7 @@ func connMysql() {
 	if err := conn.Ping(); err != nil {
 		log.Fatal(err)
 	}
+	return conn
 }
 
 func startdown() {
@@ -136,8 +140,7 @@ func send(conn *sql.DB, input <-chan zp.Record) error {
 		if domainName != curdomain {
 			curdomain = domainName
 			if _, err := stmt.Exec(
-				rec.Domain,
-				rec.TLD); err != nil {
+				rec.Domain); err != nil {
 				return err
 			}
 
