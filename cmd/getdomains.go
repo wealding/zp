@@ -111,7 +111,7 @@ func startdown() {
 	nowtime := time.Now().Unix()
 	if nowtime > filetime {
 		buf := bytes.Buffer{}
-		buf.WriteString(strconv.FormatInt(nowtime+86400, 10))
+		buf.WriteString(strconv.FormatInt(nowtime+86390, 10))
 		_ = ioutil.WriteFile("nextdown.txt", buf.Bytes(), 0666)
 		fmt.Println("开始下载，下次下载时间：", buf.Bytes())
 		cmd := exec.Command("czds.exe", "download")
