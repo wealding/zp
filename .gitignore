@@ -4,6 +4,7 @@ backup/
 go.sum
 go.mod
 getdomains.exe
+config.json
 
 
 # Editor directories and files

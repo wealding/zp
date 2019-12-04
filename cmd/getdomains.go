@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"database/sql"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -29,8 +28,6 @@ const (
 
 func main() {
 	var conn *sql.DB
-	sd := flag.String("f", "./files", "Directory with zone files with .gz extension")
-	flag.Parse()
 
 	conn = connMysql()
 	rc := make(chan zp.Record)
@@ -38,7 +35,7 @@ func main() {
 	makechan(conn, rc, wg)
 
 	for {
-		filepath.Walk(*sd, func(path string, fi os.FileInfo, err error) error {
+		filepath.Walk("./files", func(path string, fi os.FileInfo, err error) error {
 			if !strings.HasSuffix(path, zoneExtension) {
 				return nil
 			}
@@ -49,15 +46,18 @@ func main() {
 			var fileName, tld string
 			fileName = filepath.Base(path)
 			tld = strings.Replace(fileName, ".txt.gz", "", -1)
-			//执行匹配
-			if err := zp.FetchZoneFile(path, tld, rc); err != nil {
-				log.Fatal(err)
-			}
 			//处理完, 挪开gz文件
 			timeStr := time.Now().Format("2006-01-02")
-			os.MkdirAll("./backup/"+timeStr, os.ModePerm)
+			os.MkdirAll("./backup/"+timeStr, os.ModePerm)               //先创建文件夹
+			exist := fileExists("./backup/" + timeStr + "/" + fileName) //判断是否已经处理过, 处理过的话,直接挪文件
+			if exist != true {
+				//执行匹配
+				if err := zp.FetchZoneFile(path, tld, rc); err != nil {
+					log.Println(err)
+				}
+			}
 			if err := os.Rename(path, "./backup/"+timeStr+"/"+fileName); err != nil {
-				log.Fatal(err)
+				log.Println(err)
 			}
 			return nil
 		})
@@ -70,13 +70,20 @@ func main() {
 	wg.Wait()
 }
 
+func fileExists(path string) bool {
+	_, err := os.Stat(path) //os.Stat获取文件信息
+	if err != nil {
+		if os.IsExist(err) {
+			return true
+		}
+		return false
+	}
+	return true
+}
+
 func makechan(conn *sql.DB, rc <-chan zp.Record, wg sync.WaitGroup) {
-	nw := flag.Int("workers", 10, "Number of sending workers")
-	flag.Parse()
-
-	wg.Add(*nw)
-
-	for i := 0; i < *nw; i++ {
+	wg.Add(10)
+	for i := 0; i < 10; i++ {
 		go func() {
 			defer wg.Done()
 			if err := send(conn, rc); err != nil {
@@ -87,10 +94,7 @@ func makechan(conn *sql.DB, rc <-chan zp.Record, wg sync.WaitGroup) {
 }
 
 func connMysql() *sql.DB {
-	ch := flag.String("c", "root:7412369Qq@tcp(127.0.0.1:3306)/allji", "Mysql String")
-	flag.Parse()
-
-	conn, err := sql.Open("mysql", *ch)
+	conn, err := sql.Open("mysql", "root:7412369Qq@tcp(127.0.0.1:3306)/allji")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -116,7 +120,7 @@ func startdown() {
 		fmt.Println("开始下载，下次下载时间：", buf.Bytes())
 		cmd := exec.Command("czds.exe", "download")
 		if err := cmd.Start(); err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	}
 }
