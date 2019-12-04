@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	insertStatement       = `INSERT IGNORE INTO domains (domain) VALUES (?) `
+	insertStatement       = `INSERT IGNORE INTO domains (domain,tld) VALUES (?,?) `
 	zoneExtension         = "gz"
 	exceptionZoneFileName = "net.txt.gz"
 	exceptionZone         = "net"
@@ -64,7 +64,7 @@ func main() {
 		})
 		log.Println("waiting...")
 		startdown()
-		time.Sleep(10 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 
 	close(rc)
@@ -151,7 +151,8 @@ func send(conn *sql.DB, input <-chan zp.Record) error {
 		if domainName != curdomain {
 			curdomain = domainName
 			if _, err := stmt.Exec(
-				rec.Domain); err != nil {
+				rec.Domain,
+				rec.TLD); err != nil {
 				return err
 			}
 
