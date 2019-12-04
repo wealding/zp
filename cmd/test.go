@@ -1,29 +1,16 @@
 package main
 
 import (
-    "fmt"
-    "time"
+	"fmt"
+	"time"
 )
 
-//发送者
-func sender(c chan int) {
-    for i := 0; i < 100; i++ {
-        time.Sleep(time.Second * 11)
-        c <- i
-    }
-}
-
-func main(){
-    ticker := time.NewTicker(10 * time.Second)
-    for {
-        select {
-        case d := <-c:
-            fmt.Println(d)
-        case d := <-ticker.C:
-            fmt.Println(d,"这是定时的ticker >>>>>")
-        case d := <-time.NewTimer(time.Second * 3).C:
-            fmt.Println(d, "这是定时的timeout *****")
-        }
-
-    }
+func main() {
+	timeStr := time.Now().Format("2006-01-02")
+	nowtime := time.Now().Unix()
+	t, _ := time.ParseInLocation("2006-01-02 15:04:05", timeStr+" 23:59:59", time.Local)
+	t2, _ := time.ParseInLocation("2006-01-02", timeStr, time.Local)
+	fmt.Println(nowtime)
+	fmt.Println(t.Unix() + 1)
+	fmt.Println(t2.AddDate(0, 0, 1).Unix())
 }

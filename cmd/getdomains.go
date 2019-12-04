@@ -43,6 +43,7 @@ func main() {
 				conn = connMysql()
 				makechan(conn, rc, wg)
 			}
+			log.Println(path)
 			var fileName, tld string
 			fileName = filepath.Base(path)
 			tld = strings.Replace(fileName, ".txt.gz", "", -1)
@@ -113,11 +114,17 @@ func startdown() {
 	}
 	filetime, err := strconv.ParseInt(string(data), 10, 64)
 	nowtime := time.Now().Unix()
+	//次日早上8点开始下一次
+	timeStr := time.Now().Format("2006-01-02")
+	t2, _ := time.ParseInLocation("2006-01-02", timeStr, time.Local)
+	nexttime := t2.AddDate(0, 0, 1).Unix() + 28800
+	tm := time.Unix(nexttime, 0)
+
 	if nowtime > filetime {
 		buf := bytes.Buffer{}
-		buf.WriteString(strconv.FormatInt(nowtime+86390, 10))
+		buf.WriteString(strconv.FormatInt(nexttime, 10))
 		_ = ioutil.WriteFile("nextdown.txt", buf.Bytes(), 0666)
-		fmt.Println("开始下载，下次下载时间：", buf.Bytes())
+		fmt.Println("开始下载，下次下载时间：", tm.Format("2006-01-02 15:04:05"))
 		cmd := exec.Command("czds.exe", "download")
 		if err := cmd.Start(); err != nil {
 			log.Println(err)
