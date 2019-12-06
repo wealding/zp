@@ -117,7 +117,7 @@ func startdown() {
 	//次日早上8点开始下一次
 	timeStr := time.Now().Format("2006-01-02")
 	t2, _ := time.ParseInLocation("2006-01-02", timeStr, time.Local)
-	nexttime := t2.AddDate(0, 0, 1).Unix() + 28800
+	nexttime := t2.AddDate(0, 0, 2).Unix() - 3600
 	tm := time.Unix(nexttime, 0)
 
 	if nowtime > filetime {
