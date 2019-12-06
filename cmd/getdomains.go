@@ -125,12 +125,13 @@ func startdown() {
 		buf.WriteString(strconv.FormatInt(nexttime, 10))
 		_ = ioutil.WriteFile("nextdown.txt", buf.Bytes(), 0666)
 		fmt.Println("开始下载，下次下载时间：", tm.Format("2006-01-02 15:04:05"))
+		var exefile string
 		if fileExists("czds.exe") {
-			cmd := exec.Command("czds.exe", "download")
+			exefile = "czds.exe"
+		} else {
+			exefile = "./czds"
 		}
-		if fileExists("./czds") {
-			cmd := exec.Command("./czds", "download")
-		}
+		cmd := exec.Command(exefile, "download")
 		if err := cmd.Start(); err != nil {
 			log.Println(err)
 		}
