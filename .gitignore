@@ -1,8 +1,6 @@
 .DS_Store
 files/
 backup/
-go.sum
-go.mod
 getdomains.exe
 config.json
 

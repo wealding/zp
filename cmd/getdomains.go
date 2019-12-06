@@ -95,7 +95,7 @@ func makechan(conn *sql.DB, rc <-chan zp.Record, wg sync.WaitGroup) {
 }
 
 func connMysql() *sql.DB {
-	conn, err := sql.Open("mysql", "root:7412369Qq@tcp(127.0.0.1:3306)/allji")
+	conn, err := sql.Open("mysql", "names:123456Qq@tcp(127.0.0.1:3306)/names")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -125,7 +125,12 @@ func startdown() {
 		buf.WriteString(strconv.FormatInt(nexttime, 10))
 		_ = ioutil.WriteFile("nextdown.txt", buf.Bytes(), 0666)
 		fmt.Println("开始下载，下次下载时间：", tm.Format("2006-01-02 15:04:05"))
-		cmd := exec.Command("czds.exe", "download")
+		if fileExists("czds.exe") {
+			cmd := exec.Command("czds.exe", "download")
+		}
+		if fileExists("czds") {
+			cmd := exec.Command("czds", "download")
+		}
 		if err := cmd.Start(); err != nil {
 			log.Println(err)
 		}
