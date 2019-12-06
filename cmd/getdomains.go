@@ -128,8 +128,8 @@ func startdown() {
 		if fileExists("czds.exe") {
 			cmd := exec.Command("czds.exe", "download")
 		}
-		if fileExists("czds") {
-			cmd := exec.Command("czds", "download")
+		if fileExists("./czds") {
+			cmd := exec.Command("./czds", "download")
 		}
 		if err := cmd.Start(); err != nil {
 			log.Println(err)
