@@ -115,7 +115,7 @@ func startdown() {
 	}
 	filetime, err := strconv.ParseInt(string(data), 10, 64)
 	nowtime := time.Now().Unix()
-	//次日早上8点开始下一次
+	//次日23点开始下一次
 	timeStr := time.Now().Format("2006-01-02")
 	t2, _ := time.ParseInLocation("2006-01-02", timeStr, time.Local)
 	nexttime := t2.AddDate(0, 0, 2).Unix() - 3600
