@@ -46,6 +46,10 @@ func NewRecord(line string, tld string) (*Record, error) {
 		return nil, errors.New("no domain found in the record")
 	}
 
+	if tld == "com" {
+		n = strings.ToLower(n) + "." + tld
+	}
+
 	//把n最后面的点去掉,并判断是否包含多于2个点或者没有点(根域)
 	n = strings.TrimSuffix(n, ".")
 	s = strings.Split(n, ".")
