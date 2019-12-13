@@ -35,8 +35,10 @@ func NewRecord(line string, tld string) (*Record, error) {
 	)
 
 	if tld == "com" {
-		s := strings.Split(line, " NS ")
-		line = strings.ToLower(s[0]) + "." + tld + " NS " + strings.ToLower(s[1]) + "." + tld
+		ss := strings.Split(line, " NS ")
+		if len(ss) == 2 {
+			line = strings.ToLower(ss[0]) + "." + tld + " NS " + strings.ToLower(ss[1]) + "." + tld
+		}
 	}
 
 	rr, err := dns.NewRR(line)
