@@ -33,6 +33,12 @@ func NewRecord(line string, tld string) (*Record, error) {
 		n     string
 		s     []string
 	)
+
+	if tld == "com" {
+		s := strings.Split(line, " NS ")
+		line = strings.ToLower(s[0]) + "." + tld + " NS " + strings.ToLower(s[1]) + "." + tld
+	}
+
 	rr, err := dns.NewRR(line)
 	if err != nil {
 		return nil, err
@@ -44,10 +50,6 @@ func NewRecord(line string, tld string) (*Record, error) {
 
 	if n = rr.Header().Name; n == "" {
 		return nil, errors.New("no domain found in the record")
-	}
-
-	if tld == "com" {
-		n = strings.ToLower(n) + "." + tld
 	}
 
 	//把n最后面的点去掉,并判断是否包含多于2个点或者没有点(根域)
