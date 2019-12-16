@@ -1,16 +1,19 @@
 package main
 
 import (
-	"fmt"
-	"time"
+	"log"
+	"strings"
 )
 
 func main() {
-	timeStr := time.Now().Format("2006-01-02")
-	nowtime := time.Now().Unix()
-	t, _ := time.ParseInLocation("2006-01-02 15:04:05", timeStr+" 23:59:59", time.Local)
-	t2, _ := time.ParseInLocation("2006-01-02", timeStr, time.Local)
-	fmt.Println(nowtime)
-	fmt.Println(t.Unix() + 1)
-	fmt.Println(t2.AddDate(0, 0, 1).Unix())
+	var line, tld string
+	tld = "com"
+	line = "NS1-0.ENMAXENVISION A 72.29.224.33"
+	ss := strings.Split(line, " NS ")
+	if len(ss) == 2 {
+		line = strings.ToLower(ss[0]) + "." + tld + " NS " + strings.ToLower(ss[1]) + "." + tld
+		log.Println(line)
+	} else {
+		log.Println("NOT!")
+	}
 }
