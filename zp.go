@@ -37,7 +37,7 @@ func NewRecord(line string, tld string) (*Record, error) {
 	if tld == "com" {
 		ss := strings.Split(line, " NS ")
 		if len(ss) == 2 {
-			line = strings.ToLower(ss[0]) + "." + tld + " NS " + strings.ToLower(ss[1]) + "." + tld
+			line = strings.ToLower(ss[0]) + "." + tld + " NS " + strings.ToLower(ss[1])
 		} else {
 			return nil, errors.New("not ns record")
 		}
