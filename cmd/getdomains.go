@@ -83,8 +83,8 @@ func fileExists(path string) bool {
 }
 
 func makechan(conn *sql.DB, rc <-chan zp.Record, wg sync.WaitGroup) {
-	wg.Add(10)
-	for i := 0; i < 10; i++ {
+	wg.Add(20)
+	for i := 0; i < 20; i++ {
 		go func() {
 			defer wg.Done()
 			if err := send(conn, rc); err != nil {
@@ -96,7 +96,6 @@ func makechan(conn *sql.DB, rc <-chan zp.Record, wg sync.WaitGroup) {
 
 func connMysql() *sql.DB {
 	conn, err := sql.Open("mysql", "names:123456Qq@tcp(127.0.0.1:3306)/names")
-	//conn, err := sql.Open("mysql", "root:7412369Qq@tcp(127.0.0.1:3306)/allji")
 	if err != nil {
 		log.Fatal(err)
 	}
