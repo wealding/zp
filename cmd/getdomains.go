@@ -83,8 +83,8 @@ func fileExists(path string) bool {
 }
 
 func makechan(conn *sql.DB, rc <-chan zp.Record, wg sync.WaitGroup) {
-	wg.Add(20)
-	for i := 0; i < 20; i++ {
+	wg.Add(8)
+	for i := 0; i < 8; i++ {
 		go func() {
 			defer wg.Done()
 			if err := send(conn, rc); err != nil {
