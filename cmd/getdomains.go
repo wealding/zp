@@ -151,11 +151,11 @@ func send(conn *sql.DB, input <-chan zp.Record) error {
 			it++
 			if it < tSize {
 				//拼接数据
-				onedata := "(" + rec.Domain + "," + rec.TLD + "),"
+				onedata := "('" + rec.Domain + "','" + rec.TLD + "'),"
 				data = data + onedata
 			} else {
 				//拼接最后一行数据
-				onedata := "(" + rec.Domain + "," + rec.TLD + ")"
+				onedata := "('" + rec.Domain + "','" + rec.TLD + "')"
 				data = data + onedata
 			}
 			if it == tSize {

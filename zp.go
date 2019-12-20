@@ -91,6 +91,7 @@ func NewRecord(line string, tld string) (*Record, error) {
 // FetchZoneFile fetches gzipped zone file and push Record entries
 // to a channel specified in the config
 func FetchZoneFile(path string, tld string, rc chan Record) error {
+	var curdomain, domainName string
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -110,7 +111,13 @@ func FetchZoneFile(path string, tld string, rc chan Record) error {
 			// log.Println(err)
 			continue
 		}
-		rc <- *r
+		domainName = r.Domain
+		if domainName != curdomain {
+			curdomain = domainName
+			rc <- *r
+		} else {
+			continue
+		}
 	}
 
 	return nil
