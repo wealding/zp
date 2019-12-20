@@ -23,7 +23,7 @@ const (
 	zoneExtension         = "gz"
 	exceptionZoneFileName = "net.txt.gz"
 	exceptionZone         = "net"
-	tSize                 = 10000
+	tSize                 = 20000
 )
 
 func main() {
