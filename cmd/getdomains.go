@@ -23,7 +23,7 @@ const (
 	zoneExtension         = "gz"
 	exceptionZoneFileName = "net.txt.gz"
 	exceptionZone         = "net"
-	tSize                 = 22000
+	tSize                 = 10000
 )
 
 func main() {
@@ -87,7 +87,7 @@ func makechan(conn *sql.DB, rc <-chan zp.Record, wg sync.WaitGroup) {
 	for i := 0; i < 10; i++ {
 		go func() {
 			defer wg.Done()
-			if err := send(conn, rc); err != nil {
+			if err := sendWithTransaction(conn, rc); err != nil {
 				log.Println(err)
 			}
 		}()
@@ -155,7 +155,7 @@ func send(conn *sql.DB, input <-chan zp.Record) error {
 			data = data + onedata
 		}
 		if it == tSize {
-			log.Printf("Commit transaction with %d entries", tSize)
+			log.Printf("insert with %d entries", tSize)
 			it = 0
 			_, err := conn.Exec(execstring + data)
 			//log.Printf(execstring + data)
@@ -165,7 +165,7 @@ func send(conn *sql.DB, input <-chan zp.Record) error {
 			}
 		}
 	}
-	log.Println("Committing the tail")
+	log.Println("insert the tail")
 	_, err := conn.Exec(execstring + data)
 	data = " "
 	if err != nil {
