@@ -23,7 +23,7 @@ const (
 	zoneExtension         = "gz"
 	exceptionZoneFileName = "net.txt.gz"
 	exceptionZone         = "net"
-	tSize                 = 10000
+	tSize                 = 100
 )
 
 func main() {
@@ -139,6 +139,47 @@ func startdown() {
 }
 
 func send(conn *sql.DB, input <-chan zp.Record) error {
+	var it uint
+	var curdomain, domainName string
+	execstring := "INSERT IGNORE INTO domains (domain,tld) VALUES"
+	it = 0
+	data := " "
+	for rec := range input {
+		domainName = rec.Domain
+		if domainName != curdomain {
+			curdomain = domainName
+			it++
+			if it < tSize {
+				//拼接数据
+				onedata := "(" + rec.Domain + "," + rec.TLD + "),"
+				data = data + onedata
+			} else {
+				//拼接最后一行数据
+				onedata := "(" + rec.Domain + "," + rec.TLD + ")"
+				data = data + onedata
+			}
+			if it == tSize {
+				log.Printf("Commit transaction with %d entries", tSize)
+				it = 0
+				_, err := conn.Exec(execstring + data)
+				log.Printf(execstring + data)
+				data = " "
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	log.Println("Committing the tail")
+	_, err := conn.Exec(execstring + data)
+	data = " "
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func sendWithTransaction(conn *sql.DB, input <-chan zp.Record) error {
 	var it uint
 	var curdomain, domainName string
 
