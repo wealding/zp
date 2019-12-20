@@ -87,7 +87,8 @@ func makechan(conn *sql.DB, rc <-chan zp.Record, wg sync.WaitGroup) {
 	for i := 0; i < 10; i++ {
 		go func() {
 			defer wg.Done()
-			if err := sendWithTransaction(conn, rc); err != nil {
+			db := connMysql()
+			if err := send(db, rc); err != nil {
 				log.Println(err)
 			}
 		}()
@@ -140,33 +141,28 @@ func startdown() {
 
 func send(conn *sql.DB, input <-chan zp.Record) error {
 	var it uint
-	var curdomain, domainName string
 	execstring := "INSERT IGNORE INTO domains (domain,tld) VALUES"
 	it = 0
 	data := " "
 	for rec := range input {
-		domainName = rec.Domain
-		if domainName != curdomain {
-			curdomain = domainName
-			it++
-			if it < tSize {
-				//拼接数据
-				onedata := "('" + rec.Domain + "','" + rec.TLD + "'),"
-				data = data + onedata
-			} else {
-				//拼接最后一行数据
-				onedata := "('" + rec.Domain + "','" + rec.TLD + "')"
-				data = data + onedata
-			}
-			if it == tSize {
-				log.Printf("Commit transaction with %d entries", tSize)
-				it = 0
-				_, err := conn.Exec(execstring + data)
-				//log.Printf(execstring + data)
-				data = " "
-				if err != nil {
-					return err
-				}
+		it++
+		if it < tSize {
+			//拼接数据
+			onedata := "('" + rec.Domain + "','" + rec.TLD + "'),"
+			data = data + onedata
+		} else {
+			//拼接最后一行数据
+			onedata := "('" + rec.Domain + "','" + rec.TLD + "')"
+			data = data + onedata
+		}
+		if it == tSize {
+			log.Printf("Commit transaction with %d entries", tSize)
+			it = 0
+			_, err := conn.Exec(execstring + data)
+			//log.Printf(execstring + data)
+			data = " "
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -181,8 +177,6 @@ func send(conn *sql.DB, input <-chan zp.Record) error {
 
 func sendWithTransaction(conn *sql.DB, input <-chan zp.Record) error {
 	var it uint
-	var curdomain, domainName string
-
 	tx, err := conn.Begin()
 	if err != nil {
 		return err
@@ -194,36 +188,32 @@ func sendWithTransaction(conn *sql.DB, input <-chan zp.Record) error {
 	}
 
 	for rec := range input {
-		domainName = rec.Domain[0 : len(rec.Domain)-1]
-		if domainName != curdomain {
-			curdomain = domainName
-			if _, err := stmt.Exec(
-				rec.Domain,
-				rec.TLD); err != nil {
+		if _, err := stmt.Exec(
+			rec.Domain,
+			rec.TLD); err != nil {
+			return err
+		}
+
+		it++
+
+		if it == tSize {
+			log.Printf("Commit transaction with %d entries", tSize)
+			it = 0
+			if err := tx.Commit(); err != nil {
+				if strings.Contains(err.Error(), "Transaction") {
+					log.Println(err)
+				} else {
+					log.Println("tx.Commit() failed")
+					return err
+				}
+			}
+			tx, err = conn.Begin()
+			if err != nil {
 				return err
 			}
-
-			it++
-
-			if it == tSize {
-				log.Printf("Commit transaction with %d entries", tSize)
-				it = 0
-				if err := tx.Commit(); err != nil {
-					if strings.Contains(err.Error(), "Transaction") {
-						log.Println(err)
-					} else {
-						log.Println("tx.Commit() failed")
-						return err
-					}
-				}
-				tx, err = conn.Begin()
-				if err != nil {
-					return err
-				}
-				stmt, err = tx.Prepare(insertStatement)
-				if err != nil {
-					return err
-				}
+			stmt, err = tx.Prepare(insertStatement)
+			if err != nil {
+				return err
 			}
 		}
 	}
