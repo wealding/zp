@@ -23,7 +23,7 @@ const (
 	zoneExtension         = "gz"
 	exceptionZoneFileName = "net.txt.gz"
 	exceptionZone         = "net"
-	tSize                 = 100
+	tSize                 = 10000
 )
 
 func main() {
@@ -162,7 +162,7 @@ func send(conn *sql.DB, input <-chan zp.Record) error {
 				log.Printf("Commit transaction with %d entries", tSize)
 				it = 0
 				_, err := conn.Exec(execstring + data)
-				log.Printf(execstring + data)
+				//log.Printf(execstring + data)
 				data = " "
 				if err != nil {
 					return err
