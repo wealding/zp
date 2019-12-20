@@ -87,8 +87,7 @@ func makechan(conn *sql.DB, rc <-chan zp.Record, wg sync.WaitGroup) {
 	for i := 0; i < 10; i++ {
 		go func() {
 			defer wg.Done()
-			db := connMysql()
-			if err := send(db, rc); err != nil {
+			if err := send(conn, rc); err != nil {
 				log.Println(err)
 			}
 		}()
