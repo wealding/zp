@@ -81,10 +81,10 @@ func NewRecord(line string, tld string) (*Record, error) {
 	}
 
 	return &Record{
-		Domain: n,
+		Domain: strings.ToLower(n),
 		RType:  rtype,
 		Value:  value,
-		TLD:    tld,
+		TLD:    strings.ToLower(tld),
 	}, nil
 }
 
