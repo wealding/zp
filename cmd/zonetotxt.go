@@ -20,7 +20,7 @@ const (
 	zoneExtension         = "gz"
 	exceptionZoneFileName = "net.txt.gz"
 	exceptionZone         = "net"
-	tSize                 = 10000
+	tSize                 = 200000
 )
 
 var tldname string
@@ -129,7 +129,7 @@ func writetotxt(input <-chan zp.Record) error {
 
 		it++
 		if it == tSize {
-			log.Printf("Write txtfile with %d entries", tSize)
+			log.Printf("Write ./files/"+tldname+".txt with %d entries", tSize)
 			it = 0
 			//写入文件
 			writeBytesToFile("./files/"+tldname+".txt", []byte(domainsStr))
