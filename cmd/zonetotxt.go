@@ -20,7 +20,7 @@ const (
 	zoneExtension         = "gz"
 	exceptionZoneFileName = "net.txt.gz"
 	exceptionZone         = "net"
-	tSize                 = 200000
+	tSize                 = 20000
 )
 
 var tldname string
