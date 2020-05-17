@@ -26,10 +26,6 @@ const (
 var tldname string
 
 func main() {
-	rc := make(chan zp.Record)
-	var wg sync.WaitGroup
-	makechan(rc, wg)
-
 	for {
 		filepath.Walk("./files", func(path string, fi os.FileInfo, err error) error {
 			if !strings.HasSuffix(path, zoneExtension) {
@@ -45,10 +41,15 @@ func main() {
 			os.MkdirAll("./backup/"+timeStr, os.ModePerm)               //先创建文件夹
 			exist := fileExists("./backup/" + timeStr + "/" + fileName) //判断是否已经处理过, 处理过的话,直接挪文件
 			if exist != true {
+				rc := make(chan zp.Record)
+				var wg sync.WaitGroup
+				makechan(rc, wg)
 				//执行匹配
 				if err := zp.FetchZoneFile(path, tld, rc); err != nil {
 					log.Println(err)
 				}
+				close(rc)
+				wg.Wait()
 			}
 			if err := os.Rename(path, "./backup/"+timeStr+"/"+fileName); err != nil {
 				log.Println(err)
@@ -59,9 +60,6 @@ func main() {
 		startdown()
 		time.Sleep(5 * time.Second)
 	}
-
-	close(rc)
-	wg.Wait()
 }
 
 func fileExists(path string) bool {
@@ -76,8 +74,8 @@ func fileExists(path string) bool {
 }
 
 func makechan(rc <-chan zp.Record, wg sync.WaitGroup) {
-	wg.Add(20)
-	for i := 0; i < 20; i++ {
+	wg.Add(10)
+	for i := 0; i < 10; i++ {
 		go func() {
 			defer wg.Done()
 			if err := writetotxt(rc); err != nil {
@@ -122,6 +120,7 @@ func startdown() {
 func writetotxt(input <-chan zp.Record) error {
 	var it uint
 	var domainsStr string
+	timeStr := time.Now().Format("2006-01-02")
 
 	for rec := range input {
 		//这里拼字符串
@@ -129,17 +128,17 @@ func writetotxt(input <-chan zp.Record) error {
 
 		it++
 		if it == tSize {
-			log.Printf("Write ./files/"+tldname+".txt with %d entries", tSize)
+			log.Printf("Write ./txt/"+timeStr+"/"+tldname+".txt with %d entries", tSize)
 			it = 0
 			//写入文件
-			writeBytesToFile("./files/"+tldname+".txt", []byte(domainsStr))
+			writeBytesToFile("./txt/"+timeStr+"/"+tldname+".txt", []byte(domainsStr))
 			domainsStr = ""
 		}
 	}
 
 	log.Println("Write the tail")
 	//再写一下
-	writeBytesToFile("./files/"+tldname+".txt", []byte(domainsStr))
+	writeBytesToFile("./txt/"+timeStr+"/"+tldname+".txt", []byte(domainsStr))
 	domainsStr = ""
 	return nil
 }
