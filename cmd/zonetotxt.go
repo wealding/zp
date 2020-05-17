@@ -20,7 +20,7 @@ const (
 	zoneExtension         = "gz"
 	exceptionZoneFileName = "net.txt.gz"
 	exceptionZone         = "net"
-	tSize                 = 20000
+	tSize                 = 10000
 )
 
 var tldname string
@@ -76,8 +76,8 @@ func fileExists(path string) bool {
 }
 
 func makechan(rc <-chan zp.Record, wg sync.WaitGroup) {
-	wg.Add(10)
-	for i := 0; i < 10; i++ {
+	wg.Add(20)
+	for i := 0; i < 20; i++ {
 		go func() {
 			defer wg.Done()
 			if err := writetotxt(rc); err != nil {
