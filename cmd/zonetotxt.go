@@ -43,7 +43,7 @@ func main() {
 			if exist != true {
 				rc := make(chan zp.Record)
 				var wg sync.WaitGroup
-				makechan(rc, wg)
+				makechan(rc, wg, tld)
 				//执行匹配
 				if err := zp.FetchZoneFile(path, tld, rc); err != nil {
 					log.Println(err)
@@ -73,12 +73,12 @@ func fileExists(path string) bool {
 	return true
 }
 
-func makechan(rc <-chan zp.Record, wg sync.WaitGroup) {
+func makechan(rc <-chan zp.Record, wg sync.WaitGroup, tld string) {
 	wg.Add(10)
 	for i := 0; i < 10; i++ {
 		go func() {
 			defer wg.Done()
-			if err := writetotxt(rc); err != nil {
+			if err := writetotxt(rc, tld); err != nil {
 				log.Println(err)
 			}
 		}()
@@ -117,7 +117,7 @@ func startdown() {
 	}
 }
 
-func writetotxt(input <-chan zp.Record) error {
+func writetotxt(input <-chan zp.Record, tld string) error {
 	var it uint
 	var domainsStr string
 
@@ -135,17 +135,17 @@ func writetotxt(input <-chan zp.Record) error {
 
 		it++
 		if it == tSize {
-			log.Printf("Write ./txt/"+timeStr+"/"+tldname+".txt with %d entries", tSize)
+			log.Printf("Write ./txt/"+timeStr+"/"+tld+".txt with %d entries", tSize)
 			it = 0
 			//写入文件
-			writeBytesToFile("./txt/"+timeStr+"/"+tldname+".txt", []byte(domainsStr))
+			writeBytesToFile("./txt/"+timeStr+"/"+tld+".txt", []byte(domainsStr))
 			domainsStr = ""
 		}
 	}
 
 	log.Println("Write the tail")
 	//再写一下
-	writeBytesToFile("./txt/"+timeStr+"/"+tldname+".txt", []byte(domainsStr))
+	writeBytesToFile("./txt/"+timeStr+"/"+tld+".txt", []byte(domainsStr))
 	domainsStr = ""
 	return nil
 }
