@@ -120,7 +120,14 @@ func startdown() {
 func writetotxt(input <-chan zp.Record) error {
 	var it uint
 	var domainsStr string
+
 	timeStr := time.Now().Format("2006-01-02")
+
+	_, err := os.Stat("./txt/" + timeStr)
+
+	if os.IsNotExist(err) {
+		os.MkdirAll("./txt/"+timeStr, os.ModePerm)
+	}
 
 	for rec := range input {
 		//这里拼字符串
