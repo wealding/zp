@@ -34,14 +34,15 @@ func NewRecord(line string, tld string) (*Record, error) {
 		s     []string
 	)
 
-	if tld == "com" {
-		ss := strings.Split(line, " NS ")
-		if len(ss) == 2 {
-			line = strings.ToLower(ss[0]) + "." + tld + " NS " + strings.ToLower(ss[1])
-		} else {
-			return nil, errors.New("not ns record")
-		}
-	}
+	//这里是老的com zonefile，不带tld补足，现在带了，注释掉
+	//if tld == "com" {
+	//	ss := strings.Split(line, " NS ")
+	//	if len(ss) == 2 {
+	//		line = strings.ToLower(ss[0]) + "." + tld + " NS " + strings.ToLower(ss[1])
+	//	} else {
+	//		return nil, errors.New("not ns record")
+	//	}
+	//}
 
 	rr, err := dns.NewRR(line)
 	if err != nil {
